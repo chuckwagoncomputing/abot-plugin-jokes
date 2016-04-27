@@ -13,7 +13,7 @@ import (
 )
 
 var p *dt.Plugin
-var mashapeKey = os.Getenv("MASHAPE_KEY")
+var mashapeKey string = os.Getenv("MASHAPE_KEY")
 
 type APIResponse struct {
  Title string
@@ -69,16 +69,18 @@ func FollowUp(in *dt.Msg) (string, error) {
     return p.Vocab.HandleKeywords(in), nil
 }
 
-func tellJoke(in *dt.Msg) string {
- client := &http.Client{ }
+func tellJoke(in *dt.Msg) (resp string) {
+ client := &http.Client{
+  CheckRedirect: nil,
+ }
 
- req, err := http.NewRequest("GET", "http://webknox-jokes.p.mashape.com/jokes/random?category=clean", nil)
+ req, err := http.NewRequest("GET", "https://webknox-jokes.p.mashape.com/jokes/random", nil)
  req.Header.Add("X-Mashape-Key", mashapeKey)
  req.Header.Add("Accept", "application/json")
- resp, err := client.Do(req)
-
+ response, err := client.Do(req)
+ defer response.Body.Close()
  if (err == nil) {
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := ioutil.ReadAll(response.Body)
   if (err == nil) {
    var data APIResponse
    err := json.Unmarshal(body, &data)
